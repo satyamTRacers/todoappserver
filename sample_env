@@ -1,0 +1,3 @@
+DB_ADMIN_USERNAME="username"
+DB_ADMIN_PASSWORD="password"
+PORT=3001

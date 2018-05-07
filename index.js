@@ -1,79 +1,25 @@
-let express = require("express");
-let mongoose = require("mongoose");
-let bodyParser = require("body-parser");
-let Task = require("./models/Task");
-mongoose.connect("mongodb://localhost:27017/todoapp");
+require('dotenv').config();
+let express = require('express');
+let mongoose = require('mongoose');
+let bodyParser = require('body-parser');
+let taskRoute=require('./routes/taskRoute');
 let app = express();
-let counter = 0;
+
+const PORT=process.env.PORT||'3001';
+const DB_ADMIN_USERNAME=process.env.DB_ADMIN_USERNAME||'satyam';
+const DB_ADMIN_PASSWORD=process.env.DB_ADMIN_PASSWORD||'satyam123';
+
+mongoose.connect(`mongodb://${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD}@localhost:27017/todoapp`);
+
 app.use(bodyParser.json({ extended: false }));
-
-app.use((req,res,next)=>{
-  res.setHeader('Access-Control-Allow-Origin','*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Access-Control-Allow-Headers,Origin,Accept,X-Requested-With,Content-Type,Access-Control-Request-Method,Access-Control-Request-Headers');
-next();
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Access-Control-Allow-Headers,Origin,Accept,X-Requested-With,Content-Type,Access-Control-Request-Method,Access-Control-Request-Headers"
+  );
+  next();
 });
-app.post("/addTask", (req, res) => {
-  if (req.body.text) {
-    let task = new Task({
-      text: req.body.text,
-      completed: false,
-      id:'_' + Math.random().toString(36).substr(2, 9)
-    });
-    task.save(err => {
-      if (err)
-      res.status(500).json({success:false,message:'error occured while saving task in database'});
-      else 
-      res.status(200).json({success:false,message:"task created successfully in database"});
-    });
-  } else {
-    res.status(400).json({success:true,message:"task description in required to create task"});
-  }
-});
-
-app.get("/tasks", (req, res) => {
-  Task.find({}, (err, tasks) => {
-    if (err)
-    res.status(500).json({success:false,message:"error occured while fetching tasks from database"});
-    else {
-      let filteredTasks = tasks.map(task => ({
-        text: task.text,
-        completed: task.completed,
-        id: task.id
-      }));
-      res.status(200).json({success:true,tasks:filteredTasks});
-    }
-  });
-});
-app.delete("/deleteTask", (req, res) => {
-  console.log("req body", req.body);
-  if (req.body.id) {
-    Task.findOneAndRemove({ id: req.body.id }, err => {
-      if (err)
-      res.status(500).json({success:false,message:"error occured while removing task from database"});
-      else
-      res.status(200).json({success:true,message:"task has been removed successfully"});
-    });
-  } else {
-    res.status(400).json({success:false,message:"task index is required to remove task"});
-  }
-});
-
-app.put("/updateTaskStatus", (req, res) => {
-  if (req.body.id) {
-    Task.findOneAndUpdate(
-      { id: req.body.id },
-      { completed: true },
-      err => {
-          console.log(err);
-        if (err)
-        res.status(500).json({success:false,message:"error occured while updating task status"});
-        else 
-        res.status(200).json({success:true,messgae:"task is marked as completed successfully"});
-      }
-    );
-  } else {
-    res.status(400).json({success:true,message:"task index is required to remove task"});
-  }
-});
-app.listen(3001, () => console.log("server is running on port 3001"));
+app.use('/',taskRoute);
+app.listen(PORT, () => console.log(`server is running on port ${PORT}`));
